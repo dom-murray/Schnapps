@@ -9,7 +9,6 @@ import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
-import android.content.res.Configuration;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Point;
@@ -145,7 +144,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 		public void onSurfaceTextureUpdated(SurfaceTexture texture)
 		{
 		}
-
 	};
 
 	/**
@@ -154,9 +152,9 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	private String mCameraId;
 
 	/**
-	 * An {@link AutoFitTextureView} for camera preview.
+	 * An {@link TextureView} for camera preview.
 	 */
-	private AutoFitTextureView textureView;
+	private TextureView textureView;
 
 	/**
 	 * A {@link CameraCaptureSession } for camera preview.
@@ -208,7 +206,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 				activity.finish();
 			}
 		}
-
 	};
 
 	/**
@@ -235,16 +232,13 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	 * This a callback object for the {@link ImageReader}. "onImageAvailable" will be called when a
 	 * still image is ready to be saved.
 	 */
-	private final ImageReader.OnImageAvailableListener mOnImageAvailableListener
-			= new ImageReader.OnImageAvailableListener()
+	private final ImageReader.OnImageAvailableListener mOnImageAvailableListener = new ImageReader.OnImageAvailableListener()
 	{
-
 		@Override
 		public void onImageAvailable(ImageReader reader)
 		{
 			mBackgroundHandler.post(new ImageSaver(reader.acquireNextImage(), mFile));
 		}
-
 	};
 
 	/**
@@ -284,7 +278,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	 */
 	private CameraCaptureSession.CaptureCallback mCaptureCallback = new CameraCaptureSession.CaptureCallback()
 	{
-
 		private void process(CaptureResult result)
 		{
 			switch(mState)
@@ -391,10 +384,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	 * @param aspectRatio       The aspect ratio
 	 * @return The optimal {@code Size}, or an arbitrary one if none were big enough
 	 */
-	private static Size chooseOptimalSize(Size[] choices, int textureViewWidth,
-										  int textureViewHeight, int maxWidth, int maxHeight, Size aspectRatio)
+	private static Size chooseOptimalSize(Size[] choices, int textureViewWidth, int textureViewHeight, int maxWidth, int maxHeight, Size aspectRatio)
 	{
-
 		// Collect the supported resolutions that are at least as big as the preview Surface
 		List<Size> bigEnough = new ArrayList<>();
 		// Collect the supported resolutions that are smaller than the preview Surface
@@ -446,7 +437,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	{
 		//TODO replace with actual view when set up
 		view.findViewById(R.id.picture).setOnClickListener(this);
-		textureView = (AutoFitTextureView) view.findViewById(R.id.texture);
+		textureView = (TextureView) view.findViewById(R.id.texture);
 	}
 
 	@Override
@@ -607,13 +598,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 				mPreviewSize = chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class),
 						rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth,
 						maxPreviewHeight, largest);
-
-				// We fit the aspect ratio of TextureView to the size of preview we picked.
-				int orientation = getResources().getConfiguration().orientation;
-				if(orientation == Configuration.ORIENTATION_LANDSCAPE)
-					textureView.setAspectRatio(mPreviewSize.getWidth(), mPreviewSize.getHeight());
-				else
-					textureView.setAspectRatio(mPreviewSize.getHeight(), mPreviewSize.getWidth());
 
 				// Check if the flash is supported.
 				Boolean available = characteristics.get(CameraCharacteristics.FLASH_INFO_AVAILABLE);
@@ -1053,7 +1037,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	 */
 	static class CompareSizesByArea implements Comparator<Size>
 	{
-
 		@Override
 		public int compare(Size lhs, Size rhs)
 		{
