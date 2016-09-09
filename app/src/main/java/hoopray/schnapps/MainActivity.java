@@ -13,6 +13,6 @@ public class MainActivity extends AppCompatActivity
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main_activity);
 
-		startActivity(new Intent(this, CameraActivity.class));
+		startActivity(new Intent(this, CameraActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
 	}
 }

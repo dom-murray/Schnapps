@@ -156,7 +156,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	/**
 	 * An {@link AutoFitTextureView} for camera preview.
 	 */
-	private AutoFitTextureView mTextureView;
+	private AutoFitTextureView textureView;
 
 	/**
 	 * A {@link CameraCaptureSession } for camera preview.
@@ -446,8 +446,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	{
 		//TODO replace with actual view when set up
 		view.findViewById(R.id.picture).setOnClickListener(this);
-		view.findViewById(R.id.info).setOnClickListener(this);
-		mTextureView = (AutoFitTextureView) view.findViewById(R.id.texture);
+		textureView = (AutoFitTextureView) view.findViewById(R.id.texture);
 	}
 
 	@Override
@@ -467,13 +466,13 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 		// available, and "onSurfaceTextureAvailable" will not be called. In that case, we can open
 		// a camera and start preview from here (otherwise, we wait until the surface is ready in
 		// the SurfaceTextureListener).
-		if(mTextureView.isAvailable())
+		if(textureView.isAvailable())
 		{
-			openCamera(mTextureView.getWidth(), mTextureView.getHeight());
+			openCamera(textureView.getWidth(), textureView.getHeight());
 		}
 		else
 		{
-			mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
+			textureView.setSurfaceTextureListener(mSurfaceTextureListener);
 		}
 	}
 
@@ -531,8 +530,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 		{
 			for(String cameraId : manager.getCameraIdList())
 			{
-				CameraCharacteristics characteristics
-						= manager.getCameraCharacteristics(cameraId);
+				CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
 
 				// We don't use a front facing camera in this sample.
 				Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
@@ -541,21 +539,16 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 					continue;
 				}
 
-				StreamConfigurationMap map = characteristics.get(
-						CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+				StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
 				if(map == null)
 				{
 					continue;
 				}
 
 				// For still image captures, we use the largest available size.
-				Size largest = Collections.max(
-						Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)),
-						new CompareSizesByArea());
-				mImageReader = ImageReader.newInstance(largest.getWidth(), largest.getHeight(),
-						ImageFormat.JPEG, /*maxImages*/2);
-				mImageReader.setOnImageAvailableListener(
-						mOnImageAvailableListener, mBackgroundHandler);
+				Size largest = Collections.max(Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)), new CompareSizesByArea());
+				mImageReader = ImageReader.newInstance(largest.getWidth(), largest.getHeight(), ImageFormat.JPEG, 10);
+				mImageReader.setOnImageAvailableListener(mOnImageAvailableListener, mBackgroundHandler);
 
 				// Find out if we need to swap dimension to get the preview size relative to sensor
 				// coordinate.
@@ -618,15 +611,9 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 				// We fit the aspect ratio of TextureView to the size of preview we picked.
 				int orientation = getResources().getConfiguration().orientation;
 				if(orientation == Configuration.ORIENTATION_LANDSCAPE)
-				{
-					mTextureView.setAspectRatio(
-							mPreviewSize.getWidth(), mPreviewSize.getHeight());
-				}
+					textureView.setAspectRatio(mPreviewSize.getWidth(), mPreviewSize.getHeight());
 				else
-				{
-					mTextureView.setAspectRatio(
-							mPreviewSize.getHeight(), mPreviewSize.getWidth());
-				}
+					textureView.setAspectRatio(mPreviewSize.getHeight(), mPreviewSize.getWidth());
 
 				// Check if the flash is supported.
 				Boolean available = characteristics.get(CameraCharacteristics.FLASH_INFO_AVAILABLE);
@@ -752,7 +739,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	{
 		try
 		{
-			SurfaceTexture texture = mTextureView.getSurfaceTexture();
+			SurfaceTexture texture = textureView.getSurfaceTexture();
 			assert texture != null;
 
 			// We configure the size of default buffer to be the size of camera preview we want.
@@ -817,17 +804,17 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	}
 
 	/**
-	 * Configures the necessary {@link android.graphics.Matrix} transformation to `mTextureView`.
+	 * Configures the necessary {@link android.graphics.Matrix} transformation to `textureView`.
 	 * This method should be called after the camera preview size is determined in
-	 * setUpCameraOutputs and also the size of `mTextureView` is fixed.
+	 * setUpCameraOutputs and also the size of `textureView` is fixed.
 	 *
-	 * @param viewWidth  The width of `mTextureView`
-	 * @param viewHeight The height of `mTextureView`
+	 * @param viewWidth  The width of `textureView`
+	 * @param viewHeight The height of `textureView`
 	 */
 	private void configureTransform(int viewWidth, int viewHeight)
 	{
 		Activity activity = getActivity();
-		if(null == mTextureView || null == mPreviewSize || null == activity)
+		if(null == textureView || null == mPreviewSize || null == activity)
 		{
 			return;
 		}
@@ -849,7 +836,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 		{
 			matrix.postRotate(180, centerX, centerY);
 		}
-		mTextureView.setTransform(matrix);
+		textureView.setTransform(matrix);
 	}
 
 	/**
@@ -890,12 +877,10 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 		try
 		{
 			// This is how to tell the camera to trigger.
-			mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
-					CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
+			mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER, CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
 			// Tell #mCaptureCallback to wait for the precapture sequence to be set.
 			mState = STATE_WAITING_PRECAPTURE;
-			mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback,
-					mBackgroundHandler);
+			mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback, mBackgroundHandler);
 		}
 		catch(CameraAccessException e)
 		{
@@ -913,9 +898,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 		{
 			final Activity activity = getActivity();
 			if(null == activity || null == mCameraDevice)
-			{
 				return;
-			}
 			// This is the CaptureRequest.Builder that we use to take a picture.
 			final CaptureRequest.Builder captureBuilder =
 					mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
@@ -997,28 +980,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	@Override
 	public void onClick(View view)
 	{
-		/** TODO handle clicks
-		 switch(view.getId())
-		 {
-		 case R.id.picture:
-		 {
 		 takePicture();
-		 break;
-		 }
-		 case R.id.info:
-		 {
-		 Activity activity = getActivity();
-		 if(null != activity)
-		 {
-		 new AlertDialog.Builder(activity)
-		 .setMessage(R.string.intro_message)
-		 .setPositiveButton(android.R.string.ok, null)
-		 .show();
-		 }
-		 break;
-		 }
-		 }
-		 **/
 	}
 
 	private void setAutoFlash(CaptureRequest.Builder requestBuilder)
