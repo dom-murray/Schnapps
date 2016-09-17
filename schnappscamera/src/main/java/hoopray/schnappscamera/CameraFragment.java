@@ -197,7 +197,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	 * the recently taken images
 	 */
 
-	private RecyclerView.Adapter mPhotoAdapter;
+	private GridImageAdapter mPhotoAdapter;
 
 	/**
 	 * {@link CameraDevice.StateCallback} is called when {@link CameraDevice} changes its state.
@@ -278,6 +278,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 				public void run()
 				{
 					mPhotoAdapter.notifyItemChanged(position);
+					animateCameraButton();
 				}
 			});
 		}
@@ -475,7 +476,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	}
 
 	@Override
-	public void onViewCreated(final View view, Bundle savedInstanceState)
+	public void onViewCreated(View view, Bundle savedInstanceState)
 	{
 		cameraButton = view.findViewById(R.id.picture);
 		cameraButton.setOnClickListener(this);
@@ -485,6 +486,15 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 		mPhotoGrid.setLayoutManager(getLayoutManager());
 		mPhotoAdapter = new GridImageAdapter();
 		mPhotoGrid.setAdapter(mPhotoAdapter);
+
+		if(mPhotoAdapter.displayingImages())
+		{
+			int sw = getScreenWidth();
+			int fourFourDp = (int) getResources().getDisplayMetrics().density * 44;
+			int eightyDp = (int) getResources().getDisplayMetrics().density * 80;
+			cameraButton.setTranslationY(cameraButton.getY() -fourFourDp);
+			cameraButton.setTranslationX(cameraButton.getX() + (sw/2) - eightyDp);
+		}
 	}
 
 	private GridLayoutManager getLayoutManager()
@@ -533,6 +543,11 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 				return "";
 
 			return imageFile.getPath();
+		}
+
+		public boolean displayingImages()
+		{
+			return !TextUtils.isEmpty(getFile(0));
 		}
 
 		public class ImageViewHolder extends RecyclerView.ViewHolder
@@ -1080,7 +1095,10 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	public void onClick(View view)
 	{
 		takePicture();
+	}
 
+	private void animateCameraButton()
+	{
 		if(cameraButton.getTranslationY() != 0)
 			return;
 
@@ -1092,7 +1110,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 		int fourFourDp = (int) getResources().getDisplayMetrics().density * 44;
 		int eightyDp = (int) getResources().getDisplayMetrics().density * 80;
 
-		animationPath.cubicTo(cx, cy, sw - eightyDp/2, cy, sw - eightyDp, cy - fourFourDp);
+		animationPath.cubicTo(cx, cy, sw - eightyDp / 2, cy, sw - eightyDp, cy - fourFourDp);
 		Animator pathAnimator = ObjectAnimator.ofFloat(cameraButton, View.X, View.Y, animationPath);
 		pathAnimator.setDuration(500);
 		pathAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
@@ -1101,11 +1119,11 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 
 	private void setAutoFlash(CaptureRequest.Builder requestBuilder)
 	{
-		if(mFlashSupported)
-		{
-			requestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
-					CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
-		}
+//		if(mFlashSupported)
+//		{
+//			requestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
+//					CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
+//		}
 	}
 
 	/**
