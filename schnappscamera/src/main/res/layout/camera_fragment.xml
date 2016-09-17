@@ -9,26 +9,20 @@
         android:layout_height="match_parent"
         android:layout_alignParentBottom="true"
         android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true" />
+        android:layout_alignParentTop="true"/>
 
-    <FrameLayout
-        android:id="@+id/control"
-        android:layout_width="match_parent"
-        android:layout_height="112dp"
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/picture"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:elevation="4dp"
+        android:layout_centerHorizontal="true"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentStart="true"
-        android:background="@color/light_grey_seventy_percent">
-
-        <ImageButton
-            android:id="@+id/picture"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:layout_gravity="center"
-            android:elevation="4dp"
-            android:src="@drawable/camera_icon"
-            android:tint="@android:color/white"
-            android:background="@drawable/circle"/>
-    </FrameLayout>
+        android:layout_margin="16dp"
+        android:src="@drawable/camera_icon"
+        android:tint="@android:color/white"
+        android:background="@drawable/circle"
+        android:backgroundTint="@color/camera_button"/>
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/stored_images"
@@ -40,5 +34,5 @@
         android:paddingRight="8dp"
         android:paddingTop="4dp"
         android:paddingBottom="4dp"
-        android:layout_above="@id/control"/>
+        android:layout_alignParentBottom="true"/>
 </RelativeLayout>
