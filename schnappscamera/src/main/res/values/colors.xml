@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="light_grey">#4d4d4d</color>
+    <color name="lighter_grey"> #e6e6e6</color>
     <color name="light_grey_seventy_percent">#964d4d4d</color>
     <color name="camera_button">#ffd11a</color>
     <color name="light_blue">#33d6ff</color>
+    <color name="dark_purple">#303F9F</color>
+    <color name="purple">#5566c3</color>
 </resources>

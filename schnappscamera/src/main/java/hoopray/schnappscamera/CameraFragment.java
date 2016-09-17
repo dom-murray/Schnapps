@@ -10,6 +10,7 @@ import android.app.DialogFragment;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.ImageFormat;
@@ -551,14 +552,15 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 			return !TextUtils.isEmpty(getFile(0));
 		}
 
-		public class ImageViewHolder extends RecyclerView.ViewHolder
+		public class ImageViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener
 		{
 			private ImageView mImageView;
 
 			public ImageViewHolder(View itemView)
 			{
 				super(itemView);
-				mImageView = (ImageView) itemView;
+				mImageView = (ImageView) itemView.findViewById(R.id.image);
+				itemView.setOnClickListener(this);
 			}
 
 			/**
@@ -577,6 +579,12 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 				Picasso.with(mImageView.getContext()).load(new File(image))
 						.memoryPolicy(MemoryPolicy.NO_CACHE)
 						.fit().into(mImageView);
+			}
+
+			@Override
+			public void onClick(View view)
+			{
+				startActivity(new Intent(mImageView.getContext(), ImagesActivity.class));
 			}
 		}
 	}
