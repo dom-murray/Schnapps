@@ -277,7 +277,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 				@Override
 				public void run()
 				{
-					mPhotoAdapter.notifyItemChanged(position);
+					if(position <= mPhotoAdapter.getItemCount())
+						mPhotoAdapter.notifyItemChanged(position);
 					animateCameraButton();
 				}
 			});
@@ -492,8 +493,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 			int sw = getScreenWidth();
 			int fourFourDp = (int) getResources().getDisplayMetrics().density * 44;
 			int eightyDp = (int) getResources().getDisplayMetrics().density * 80;
-			cameraButton.setTranslationY(cameraButton.getY() -fourFourDp);
-			cameraButton.setTranslationX(cameraButton.getX() + (sw/2) - eightyDp);
+			cameraButton.setTranslationY(cameraButton.getY() - fourFourDp);
+			cameraButton.setTranslationX(cameraButton.getX() + (sw / 2) - eightyDp);
 		}
 	}
 
