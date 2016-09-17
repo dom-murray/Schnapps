@@ -177,7 +177,14 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	 * A {@link android.support.v7.widget.RecyclerView} that displays a list of taken images
 	 * to be returned through the intent result
 	 */
-	private RecyclerView takenPhotos;
+	private RecyclerView mPhotoGrid;
+
+	/**
+	 * {@link android.support.v7.widget.RecyclerView.Adapter} an adapter for displaying
+	 * the recently taken images
+	 */
+
+	private RecyclerView.Adapter mPhotoAdapter;
 
 	/**
 	 * {@link CameraDevice.StateCallback} is called when {@link CameraDevice} changes its state.
@@ -444,8 +451,55 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	{
 		view.findViewById(R.id.picture).setOnClickListener(this);
 		textureView = (TextureView) view.findViewById(R.id.texture);
-		takenPhotos = (RecyclerView) view.findViewById(R.id.stored_images);
-		takenPhotos.setLayoutManager(new GridLayoutManager(getActivity(), 8));
+		mPhotoGrid = (RecyclerView) view.findViewById(R.id.stored_images);
+
+		mPhotoGrid.setLayoutManager(new GridLayoutManager(getActivity(), 8));
+		mPhotoAdapter = new GridImageAdapter();
+	}
+
+	protected class GridImageAdapter extends RecyclerView.Adapter<GridImageAdapter.ImageViewHolder>
+	{
+		ArrayList<String> mImages = new ArrayList<>(0);
+
+		@Override
+		public GridImageAdapter.ImageViewHolder onCreateViewHolder(ViewGroup parent, int viewType)
+		{
+			View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.grid_image, parent, false);
+			return new ImageViewHolder(view);
+		}
+
+		@Override
+		public void onBindViewHolder(GridImageAdapter.ImageViewHolder holder, int position)
+		{
+			holder.bind(getFile(position));
+		}
+
+		@Override
+		public int getItemCount()
+		{
+			return mImages.size();
+		}
+
+		public String getFile(int position)
+		{
+			if(position > mImages.size())
+				return "";
+
+			return mImages.get(position);
+		}
+
+		public class ImageViewHolder extends RecyclerView.ViewHolder
+		{
+			public ImageViewHolder(View itemView)
+			{
+				super(itemView);
+			}
+
+			public void bind(String image)
+			{
+				//void
+			}
+		}
 	}
 
 	@Override
