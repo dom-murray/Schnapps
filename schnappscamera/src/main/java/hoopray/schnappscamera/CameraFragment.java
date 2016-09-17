@@ -26,7 +26,6 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -47,6 +46,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.Toast;
+import com.squareup.picasso.MemoryPolicy;
+import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -472,7 +473,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 		textureView = (TextureView) view.findViewById(R.id.texture);
 		mPhotoGrid = (RecyclerView) view.findViewById(R.id.stored_images);
 
-		mPhotoGrid.setLayoutManager(new GridLayoutManager(getActivity(), 8, LinearLayoutManager.HORIZONTAL, false));
+		GridLayoutManager manager = new GridLayoutManager(getActivity(), 8, LinearLayoutManager.VERTICAL, false);
+		mPhotoGrid.setLayoutManager(manager);
 		mPhotoAdapter = new GridImageAdapter();
 		mPhotoGrid.setAdapter(mPhotoAdapter);
 	}
@@ -530,10 +532,11 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 					return;
 				}
 
-				mImageView.setImageURI(Uri.fromFile(new File(image)));
-//				Picasso.with(mImageView.getContext()).load(image)
-//						.resize(mImageView.getMaxWidth(), mImageView.getMaxHeight())
-//						.centerInside().into(mImageView);
+				int eightyDP = (int) getResources().getDisplayMetrics().density * 80;
+				Picasso.with(mImageView.getContext()).load(new File(image))
+						.memoryPolicy(MemoryPolicy.NO_CACHE)
+						.resize(eightyDP, eightyDP)
+						.centerInside().into(mImageView);
 			}
 		}
 	}
