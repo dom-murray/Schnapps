@@ -26,6 +26,7 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -33,7 +34,9 @@ import android.support.annotation.NonNull;
 import android.support.v13.app.FragmentCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
@@ -42,6 +45,7 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -238,20 +242,35 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	private ImageReader mImageReader;
 
 	/**
-	 * This is the output file for our picture.
-	 */
-	private File mFile;
-
-	/**
 	 * This a callback object for the {@link ImageReader}. "onImageAvailable" will be called when a
 	 * still image is ready to be saved.
 	 */
 	private final ImageReader.OnImageAvailableListener mOnImageAvailableListener = new ImageReader.OnImageAvailableListener()
 	{
+		private int mCount = 0;
+
 		@Override
 		public void onImageAvailable(ImageReader reader)
 		{
-			mBackgroundHandler.post(new ImageSaver(reader.acquireNextImage(), mFile));
+			String path = getActivity().getExternalFilesDir(null).getPath() + "/pic" + mCount + ".jpg";
+			mBackgroundHandler.post(new ImageSaver(reader.acquireNextImage(), path, mCount, imageSavedListener));
+			mCount++;
+		}
+	};
+
+	private final ImageSaver.ImageSavedListener imageSavedListener = new ImageSaver.ImageSavedListener()
+	{
+		@Override
+		public void imageSaved(final int position)
+		{
+			mPhotoGrid.post(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					mPhotoAdapter.notifyItemChanged(position);
+				}
+			});
 		}
 	};
 
@@ -453,14 +472,13 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 		textureView = (TextureView) view.findViewById(R.id.texture);
 		mPhotoGrid = (RecyclerView) view.findViewById(R.id.stored_images);
 
-		mPhotoGrid.setLayoutManager(new GridLayoutManager(getActivity(), 8));
+		mPhotoGrid.setLayoutManager(new GridLayoutManager(getActivity(), 8, LinearLayoutManager.HORIZONTAL, false));
 		mPhotoAdapter = new GridImageAdapter();
+		mPhotoGrid.setAdapter(mPhotoAdapter);
 	}
 
 	protected class GridImageAdapter extends RecyclerView.Adapter<GridImageAdapter.ImageViewHolder>
 	{
-		ArrayList<String> mImages = new ArrayList<>(0);
-
 		@Override
 		public GridImageAdapter.ImageViewHolder onCreateViewHolder(ViewGroup parent, int viewType)
 		{
@@ -477,36 +495,47 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 		@Override
 		public int getItemCount()
 		{
-			return mImages.size();
+			return 8;
 		}
 
 		public String getFile(int position)
 		{
-			if(position > mImages.size())
+			File imageFile = new File(getActivity().getExternalFilesDir(null) + "/pic" + position + ".jpg");
+			if(!imageFile.exists())
 				return "";
 
-			return mImages.get(position);
+			return imageFile.getPath();
 		}
 
 		public class ImageViewHolder extends RecyclerView.ViewHolder
 		{
+			private ImageView mImageView;
+
 			public ImageViewHolder(View itemView)
 			{
 				super(itemView);
+				mImageView = (ImageView) itemView;
 			}
 
+			/**
+			 * Binds the image to the view. Separate display
+			 *
+			 * @param image The path to the image
+			 */
 			public void bind(String image)
 			{
-				//void
+				if(TextUtils.isEmpty(image))
+				{
+					mImageView.setImageResource(0);
+					return;
+				}
+
+				mImageView.setImageURI(Uri.fromFile(new File(image)));
+//				Picasso.with(mImageView.getContext()).load(image)
+//						.resize(mImageView.getMaxWidth(), mImageView.getMaxHeight())
+//						.centerInside().into(mImageView);
 			}
 		}
-	}
-
-	@Override
-	public void onActivityCreated(Bundle savedInstanceState)
-	{
-		super.onActivityCreated(savedInstanceState);
-		mFile = new File(getActivity().getExternalFilesDir(null), "pic.jpg");
 	}
 
 	@Override
@@ -818,8 +847,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 							try
 							{
 								// Auto focus should be continuous for camera preview.
-								mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
-										CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+								mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
 								// Flash is automatically enabled when necessary.
 								setAutoFlash(mPreviewRequestBuilder);
 
@@ -961,8 +989,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 				public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request,
 											   @NonNull TotalCaptureResult result)
 				{
-					showToast("Saved: " + mFile);
-					Log.d(TAG, mFile.toString());
+					showToast("Saved: new photo");// + mFile);
+					Log.d(TAG, "Saved new photo");//mFile.toString());
 					unlockFocus();
 				}
 			};
@@ -1003,12 +1031,10 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 			mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
 					CameraMetadata.CONTROL_AF_TRIGGER_CANCEL);
 			setAutoFlash(mPreviewRequestBuilder);
-			mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback,
-					mBackgroundHandler);
+			mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback, mBackgroundHandler);
 			// After this, the camera will go back to the normal state of preview.
 			mState = STATE_PREVIEW;
-			mCaptureSession.setRepeatingRequest(mPreviewRequest, mCaptureCallback,
-					mBackgroundHandler);
+			mCaptureSession.setRepeatingRequest(mPreviewRequest, mCaptureCallback, mBackgroundHandler);
 		}
 		catch(CameraAccessException e)
 		{
@@ -1024,11 +1050,11 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 
 	private void setAutoFlash(CaptureRequest.Builder requestBuilder)
 	{
-		if(mFlashSupported)
-		{
-			requestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
-					CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
-		}
+//		if(mFlashSupported)
+//		{
+//			requestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
+//					CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
+//		}
 	}
 
 	/**
@@ -1036,33 +1062,36 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	 */
 	private static class ImageSaver implements Runnable
 	{
-
 		/**
 		 * The JPEG image
 		 */
 		private final Image mImage;
-		/**
-		 * The file we save the image into.
-		 */
-		private final File mFile;
 
-		public ImageSaver(Image image, File file)
+		private final String mFilePath;
+		private ImageSavedListener mListener;
+		private int mPosition;
+
+		public ImageSaver(Image image, String filePath, int position, ImageSavedListener listener)
 		{
 			mImage = image;
-			mFile = file;
+			mFilePath = filePath;
+			mListener = listener;
+			mPosition = position;
 		}
 
 		@Override
 		public void run()
 		{
+			File file = new File(mFilePath);
 			ByteBuffer buffer = mImage.getPlanes()[0].getBuffer();
 			byte[] bytes = new byte[buffer.remaining()];
 			buffer.get(bytes);
 			FileOutputStream output = null;
 			try
 			{
-				output = new FileOutputStream(mFile);
+				output = new FileOutputStream(file);
 				output.write(bytes);
+				mListener.imageSaved(mPosition);
 			}
 			catch(IOException e)
 			{
@@ -1085,6 +1114,10 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 			}
 		}
 
+		public interface ImageSavedListener
+		{
+			void imageSaved(int position);
+		}
 	}
 
 	/**

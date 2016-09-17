@@ -17,13 +17,15 @@
         android:layout_height="112dp"
         android:layout_alignParentBottom="true"
         android:layout_alignParentStart="true"
-        android:background="@color/camera_blue">
+        android:elevation="2dp"
+        android:background="@color/light_grey_seventy_percent">
 
         <ImageButton
             android:id="@+id/picture"
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:layout_gravity="center"
+            android:elevation="4dp"
             android:src="@drawable/camera_icon"
             android:tint="@android:color/white"
             android:background="@drawable/circle"/>
@@ -33,5 +35,8 @@
         android:id="@+id/stored_images"
         android:layout_width="match_parent"
         android:layout_height="80dp"
-        android:layout_above="@id/control"/>
+        android:elevation="2dp"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="112dp"
+        android:background="@color/light_grey_seventy_percent"/>
 </RelativeLayout>
