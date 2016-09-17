@@ -9,6 +9,7 @@ import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Point;
@@ -39,6 +40,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.Surface;
 import android.view.TextureView;
@@ -473,10 +475,23 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 		textureView = (TextureView) view.findViewById(R.id.texture);
 		mPhotoGrid = (RecyclerView) view.findViewById(R.id.stored_images);
 
-		GridLayoutManager manager = new GridLayoutManager(getActivity(), 8, LinearLayoutManager.VERTICAL, false);
-		mPhotoGrid.setLayoutManager(manager);
+		mPhotoGrid.setLayoutManager(getLayoutManager());
 		mPhotoAdapter = new GridImageAdapter();
 		mPhotoGrid.setAdapter(mPhotoAdapter);
+	}
+
+	private GridLayoutManager getLayoutManager()
+	{
+		return new GridLayoutManager(getActivity(), getSpanCount(), LinearLayoutManager.VERTICAL, false);
+	}
+
+	private int getSpanCount()
+	{
+		Display display = getActivity().getWindowManager().getDefaultDisplay();
+		Point size = new Point();
+		display.getSize(size);
+		int width = size.x;
+		return (int) (width / (getResources().getDisplayMetrics().density * 80));
 	}
 
 	protected class GridImageAdapter extends RecyclerView.Adapter<GridImageAdapter.ImageViewHolder>
@@ -497,7 +512,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 		@Override
 		public int getItemCount()
 		{
-			return 8;
+			return getSpanCount();
 		}
 
 		public String getFile(int position)
@@ -532,13 +547,18 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 					return;
 				}
 
-				int eightyDP = (int) getResources().getDisplayMetrics().density * 80;
 				Picasso.with(mImageView.getContext()).load(new File(image))
 						.memoryPolicy(MemoryPolicy.NO_CACHE)
-						.resize(eightyDP, eightyDP)
-						.centerInside().into(mImageView);
+						.fit().into(mImageView);
 			}
 		}
+	}
+
+	@Override
+	public void onConfigurationChanged(Configuration newConfig)
+	{
+		super.onConfigurationChanged(newConfig);
+		((GridLayoutManager) mPhotoGrid.getLayoutManager()).setSpanCount(getSpanCount());
 	}
 
 	@Override
@@ -1053,11 +1073,11 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 
 	private void setAutoFlash(CaptureRequest.Builder requestBuilder)
 	{
-		if(mFlashSupported)
-		{
-			requestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
-					CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
-		}
+//		if(mFlashSupported)
+//		{
+//			requestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
+//					CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
+//		}
 	}
 
 	/**
