@@ -27,4 +27,10 @@
             android:tint="@android:color/white"
             android:background="@drawable/circle"/>
     </FrameLayout>
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/stored_images"
+        android:layout_width="80dp"
+        android:layout_height="match_parent"
+        android:layout_above="@id/control"/>
 </RelativeLayout>

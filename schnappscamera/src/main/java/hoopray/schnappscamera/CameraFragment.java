@@ -32,6 +32,8 @@ import android.os.HandlerThread;
 import android.support.annotation.NonNull;
 import android.support.v13.app.FragmentCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
@@ -157,7 +159,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	private TextureView textureView;
 
 	/**
-	 * A {@link CameraCaptureSession } for camera preview.
+	 * A {@link CameraCaptureSession} for camera preview.
 	 */
 	private CameraCaptureSession mCaptureSession;
 
@@ -172,11 +174,16 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	private Size mPreviewSize;
 
 	/**
+	 * A {@link android.support.v7.widget.RecyclerView} that displays a list of taken images
+	 * to be returned through the intent result
+	 */
+	private RecyclerView takenPhotos;
+
+	/**
 	 * {@link CameraDevice.StateCallback} is called when {@link CameraDevice} changes its state.
 	 */
 	private final CameraDevice.StateCallback mStateCallback = new CameraDevice.StateCallback()
 	{
-
 		@Override
 		public void onOpened(@NonNull CameraDevice cameraDevice)
 		{
@@ -435,9 +442,10 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	@Override
 	public void onViewCreated(final View view, Bundle savedInstanceState)
 	{
-		//TODO replace with actual view when set up
 		view.findViewById(R.id.picture).setOnClickListener(this);
 		textureView = (TextureView) view.findViewById(R.id.texture);
+		takenPhotos = (RecyclerView) view.findViewById(R.id.stored_images);
+		takenPhotos.setLayoutManager(new GridLayoutManager(getActivity(), 8));
 	}
 
 	@Override
@@ -839,12 +847,10 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 		try
 		{
 			// This is how to tell the camera to lock focus.
-			mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
-					CameraMetadata.CONTROL_AF_TRIGGER_START);
+			mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CameraMetadata.CONTROL_AF_TRIGGER_START);
 			// Tell #mCaptureCallback to wait for the lock.
 			mState = STATE_WAITING_LOCK;
-			mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback,
-					mBackgroundHandler);
+			mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback, mBackgroundHandler);
 		}
 		catch(CameraAccessException e)
 		{
@@ -884,26 +890,21 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 			if(null == activity || null == mCameraDevice)
 				return;
 			// This is the CaptureRequest.Builder that we use to take a picture.
-			final CaptureRequest.Builder captureBuilder =
-					mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+			final CaptureRequest.Builder captureBuilder = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
 			captureBuilder.addTarget(mImageReader.getSurface());
 
 			// Use the same AE and AF modes as the preview.
-			captureBuilder.set(CaptureRequest.CONTROL_AF_MODE,
-					CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+			captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
 			setAutoFlash(captureBuilder);
 
 			// Orientation
 			int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
 			captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, getOrientation(rotation));
 
-			CameraCaptureSession.CaptureCallback CaptureCallback
-					= new CameraCaptureSession.CaptureCallback()
+			CameraCaptureSession.CaptureCallback captureCallback = new CameraCaptureSession.CaptureCallback()
 			{
-
 				@Override
-				public void onCaptureCompleted(@NonNull CameraCaptureSession session,
-											   @NonNull CaptureRequest request,
+				public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request,
 											   @NonNull TotalCaptureResult result)
 				{
 					showToast("Saved: " + mFile);
@@ -913,7 +914,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 			};
 
 			mCaptureSession.stopRepeating();
-			mCaptureSession.capture(captureBuilder.build(), CaptureCallback, null);
+			mCaptureSession.capture(captureBuilder.build(), captureCallback, null);
 		}
 		catch(CameraAccessException e)
 		{
