@@ -2,4 +2,5 @@
 <resources>
     <color name="light_grey_seventy_percent">#964d4d4d</color>
     <color name="camera_button">#ffd11a</color>
+    <color name="light_blue">#33d6ff</color>
 </resources>

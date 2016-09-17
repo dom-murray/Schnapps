@@ -1,6 +1,8 @@
 package hoopray.schnappscamera;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -9,8 +11,10 @@ import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
+import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
@@ -39,11 +43,13 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.Toast;
 import com.squareup.picasso.MemoryPolicy;
@@ -158,6 +164,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	 */
 	private String mCameraId;
 
+	private View cameraButton;
+
 	/**
 	 * An {@link TextureView} for camera preview.
 	 */
@@ -189,7 +197,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	 * the recently taken images
 	 */
 
-	private RecyclerView.Adapter mPhotoAdapter;
+	private GridImageAdapter mPhotoAdapter;
 
 	/**
 	 * {@link CameraDevice.StateCallback} is called when {@link CameraDevice} changes its state.
@@ -269,7 +277,9 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 				@Override
 				public void run()
 				{
-					mPhotoAdapter.notifyItemChanged(position);
+					if(position <= mPhotoAdapter.getItemCount())
+						mPhotoAdapter.notifyItemChanged(position);
+					animateCameraButton();
 				}
 			});
 		}
@@ -467,16 +477,43 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	}
 
 	@Override
-	public void onViewCreated(final View view, Bundle savedInstanceState)
+	public void onViewCreated(View view, Bundle savedInstanceState)
 	{
-		view.findViewById(R.id.picture).setOnClickListener(this);
+		cameraButton = view.findViewById(R.id.picture);
+		cameraButton.setOnClickListener(this);
 		textureView = (TextureView) view.findViewById(R.id.texture);
 		mPhotoGrid = (RecyclerView) view.findViewById(R.id.stored_images);
 
-		GridLayoutManager manager = new GridLayoutManager(getActivity(), 8, LinearLayoutManager.VERTICAL, false);
-		mPhotoGrid.setLayoutManager(manager);
+		mPhotoGrid.setLayoutManager(getLayoutManager());
 		mPhotoAdapter = new GridImageAdapter();
 		mPhotoGrid.setAdapter(mPhotoAdapter);
+
+		if(mPhotoAdapter.displayingImages())
+		{
+			int sw = getScreenWidth();
+			int fourFourDp = (int) getResources().getDisplayMetrics().density * 44;
+			int eightyDp = (int) getResources().getDisplayMetrics().density * 80;
+			cameraButton.setTranslationY(cameraButton.getY() - fourFourDp);
+			cameraButton.setTranslationX(cameraButton.getX() + (sw / 2) - eightyDp);
+		}
+	}
+
+	private GridLayoutManager getLayoutManager()
+	{
+		return new GridLayoutManager(getActivity(), getSpanCount(), LinearLayoutManager.VERTICAL, false);
+	}
+
+	private int getScreenWidth()
+	{
+		Display display = getActivity().getWindowManager().getDefaultDisplay();
+		Point size = new Point();
+		display.getSize(size);
+		return size.x;
+	}
+
+	private int getSpanCount()
+	{
+		return (int) (getScreenWidth() / (getResources().getDisplayMetrics().density * 80));
 	}
 
 	protected class GridImageAdapter extends RecyclerView.Adapter<GridImageAdapter.ImageViewHolder>
@@ -497,7 +534,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 		@Override
 		public int getItemCount()
 		{
-			return 8;
+			return getSpanCount();
 		}
 
 		public String getFile(int position)
@@ -507,6 +544,11 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 				return "";
 
 			return imageFile.getPath();
+		}
+
+		public boolean displayingImages()
+		{
+			return !TextUtils.isEmpty(getFile(0));
 		}
 
 		public class ImageViewHolder extends RecyclerView.ViewHolder
@@ -532,13 +574,18 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 					return;
 				}
 
-				int eightyDP = (int) getResources().getDisplayMetrics().density * 80;
 				Picasso.with(mImageView.getContext()).load(new File(image))
 						.memoryPolicy(MemoryPolicy.NO_CACHE)
-						.resize(eightyDP, eightyDP)
-						.centerInside().into(mImageView);
+						.fit().into(mImageView);
 			}
 		}
+	}
+
+	@Override
+	public void onConfigurationChanged(Configuration newConfig)
+	{
+		super.onConfigurationChanged(newConfig);
+		((GridLayoutManager) mPhotoGrid.getLayoutManager()).setSpanCount(getSpanCount());
 	}
 
 	@Override
@@ -1048,16 +1095,36 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	@Override
 	public void onClick(View view)
 	{
-		 takePicture();
+		takePicture();
+	}
+
+	private void animateCameraButton()
+	{
+		if(cameraButton.getTranslationY() != 0)
+			return;
+
+		Path animationPath = new Path();
+		int cy = (int) cameraButton.getY();
+		int cx = (int) cameraButton.getX();
+		animationPath.moveTo(cameraButton.getX(), cy);
+		int sw = getScreenWidth();
+		int fourFourDp = (int) getResources().getDisplayMetrics().density * 44;
+		int eightyDp = (int) getResources().getDisplayMetrics().density * 80;
+
+		animationPath.cubicTo(cx, cy, sw - eightyDp / 2, cy, sw - eightyDp, cy - fourFourDp);
+		Animator pathAnimator = ObjectAnimator.ofFloat(cameraButton, View.X, View.Y, animationPath);
+		pathAnimator.setDuration(500);
+		pathAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+		pathAnimator.start();
 	}
 
 	private void setAutoFlash(CaptureRequest.Builder requestBuilder)
 	{
-		if(mFlashSupported)
-		{
-			requestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
-					CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
-		}
+//		if(mFlashSupported)
+//		{
+//			requestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
+//					CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
+//		}
 	}
 
 	/**
