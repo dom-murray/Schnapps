@@ -537,7 +537,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 		@Override
 		public int getItemCount()
 		{
-			return getSpanCount();
+			return getActivity().getExternalFilesDir(null).listFiles().length;
 		}
 
 		public String getFile(int position)
