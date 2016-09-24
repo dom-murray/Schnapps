@@ -13,6 +13,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Path;
@@ -35,7 +36,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
+import android.support.v13.app.ActivityCompat;
 import android.support.v13.app.FragmentCompat;
+import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
@@ -129,6 +132,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	 * Max preview height that is guaranteed by Camera2 API
 	 */
 	private static final int MAX_PREVIEW_HEIGHT = 1080;
+
+	private static boolean capturing;
 
 	/**
 	 * {@link TextureView.SurfaceTextureListener} handles several lifecycle events on a
@@ -535,7 +540,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 		@Override
 		public int getItemCount()
 		{
-			return getSpanCount();
+			return getActivity().getExternalFilesDir(null).listFiles().length;
 		}
 
 		public String getFile(int position)
@@ -564,7 +569,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 			}
 
 			/**
-			 * Binds the image to the view. Separate display
+			 * Binds the image to the view
 			 *
 			 * @param image The path to the image
 			 */
@@ -576,15 +581,26 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 					return;
 				}
 
+				int eighty = (int) getResources().getDisplayMetrics().density * 80;
 				Picasso.with(mImageView.getContext()).load(new File(image))
 						.memoryPolicy(MemoryPolicy.NO_CACHE)
-						.fit().into(mImageView);
+						.resize(eighty, eighty).centerInside().into(mImageView);
 			}
 
 			@Override
 			public void onClick(View view)
 			{
-				startActivity(new Intent(mImageView.getContext(), ImagesActivity.class));
+				ActivityOptionsCompat optionsCompat;
+
+				Bitmap bitmap = Bitmap.createBitmap(view.getWidth(), view.getHeight(), Bitmap.Config.ARGB_8888);
+				optionsCompat = ActivityOptionsCompat.makeThumbnailScaleUpAnimation(view,
+						bitmap, (int) view.getX(), (int) view.getY());
+
+//				optionsCompat = ActivityOptionsCompat.makeClipRevealAnimation(view,
+//						(int) view.getX(), (int) view.getY(), view.getWidth(), view.getHeight());
+
+//				ActivityOptionsCompat optionsCompat = ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity(), mImageView, mImageView.getTransitionName());
+				ActivityCompat.startActivity(getActivity(), new Intent(mImageView.getContext(), ImagesActivity.class), optionsCompat.toBundle());
 			}
 		}
 	}
@@ -1024,8 +1040,12 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	 */
 	private void captureStillPicture()
 	{
+		if(capturing)
+			return;
+
 		try
 		{
+			capturing = true;
 			final Activity activity = getActivity();
 			if(null == activity || null == mCameraDevice)
 				return;
@@ -1050,6 +1070,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 					showToast("Saved: new photo");// + mFile);
 					Log.d(TAG, "Saved new photo");//mFile.toString());
 					unlockFocus();
+					capturing = false;
 				}
 			};
 
