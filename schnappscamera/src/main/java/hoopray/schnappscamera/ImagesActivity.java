@@ -27,7 +27,6 @@ public class ImagesActivity extends AppCompatActivity
 		ViewPager imagesPager = (ViewPager) findViewById(R.id.images_pager);
 		imagesPager.setAdapter(new ImagesPager(getSupportFragmentManager(), this));
 		imagesPager.setOffscreenPageLimit(2);
-		imagesPager.setPageTransformer(false, new HeaderViewPagerTransformer());
 
 		ExtensiblePageIndicator indicator = (ExtensiblePageIndicator) findViewById(R.id.pager_indicator);
 		indicator.initViewPager(imagesPager);

@@ -130,6 +130,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	 */
 	private static final int MAX_PREVIEW_HEIGHT = 1080;
 
+	private static boolean capturing;
+
 	/**
 	 * {@link TextureView.SurfaceTextureListener} handles several lifecycle events on a
 	 * {@link TextureView}.
@@ -576,9 +578,10 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 					return;
 				}
 
+				int eighty = (int) getResources().getDisplayMetrics().density * 80;
 				Picasso.with(mImageView.getContext()).load(new File(image))
 						.memoryPolicy(MemoryPolicy.NO_CACHE)
-						.fit().into(mImageView);
+						.resize(eighty, eighty).centerInside().into(mImageView);
 			}
 
 			@Override
@@ -1024,8 +1027,12 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	 */
 	private void captureStillPicture()
 	{
+		if(capturing)
+			return;
+
 		try
 		{
+			capturing = true;
 			final Activity activity = getActivity();
 			if(null == activity || null == mCameraDevice)
 				return;
@@ -1050,6 +1057,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 					showToast("Saved: new photo");// + mFile);
 					Log.d(TAG, "Saved new photo");//mFile.toString());
 					unlockFocus();
+					capturing = false;
 				}
 			};
 

@@ -39,6 +39,6 @@ public class ImageFragment extends Fragment
 	{
 		super.onViewCreated(view, savedInstanceState);
 		ImageView imageView = (ImageView) view;
-		Picasso.with(view.getContext()).load(new File(getArguments().getString(FILE_PATH))).into(imageView);
+		Picasso.with(view.getContext()).load(new File(getArguments().getString(FILE_PATH))).fit().into(imageView);
 	}
 }
