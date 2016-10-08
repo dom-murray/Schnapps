@@ -495,6 +495,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 		mPhotoGrid = (RecyclerView) view.findViewById(R.id.stored_images);
 
 		mPhotoGrid.setLayoutManager(getLayoutManager());
+		mPhotoGrid.getItemAnimator().setChangeDuration(0);
 		mPhotoAdapter = new GridImageAdapter();
 		mPhotoGrid.setAdapter(mPhotoAdapter);
 
@@ -600,7 +601,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 					@Override
 					public void onClick(View view)
 					{
-						getActivity().getExternalFilesDir(null).listFiles()[position].delete();
+						view.getContext().getExternalFilesDir(null).listFiles()[position].delete();
 						notifyItemRemoved(position);
 
 						int count = getItemCount();
@@ -610,7 +611,10 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 							notifyItemChanged(0);
 					}
 				});
-				mDeleteView.setVisibility(getItemCount() < 2 ? View.GONE : View.VISIBLE);
+
+				int scale = getItemCount() < 2 ? 0 : 1;
+				if(mDeleteView.getScaleX() != scale)
+					mDeleteView.animate().scaleX(scale).scaleY(scale).start();
 			}
 
 			@Override
