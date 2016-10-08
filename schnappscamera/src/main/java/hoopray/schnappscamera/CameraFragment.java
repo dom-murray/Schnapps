@@ -287,6 +287,9 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 					if(position <= count)
 						mPhotoAdapter.notifyItemChanged(position);
 
+					if(position == 1)
+						mPhotoAdapter.notifyItemChanged(0);
+
 					mPhotoGrid.scrollToPosition(position);
 					animateCameraButton();
 				}
@@ -541,33 +544,36 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 		@Override
 		public int getItemCount()
 		{
-			return getActivity().getExternalFilesDir(null).listFiles().length;
+			File dir = getActivity().getExternalFilesDir(null);
+			return dir == null ? 0 : dir.listFiles().length;
 		}
 
 		public String getFile(int position)
 		{
-			File imageFile = new File(getActivity().getExternalFilesDir(null) + "/pic" + position + ".jpg");
-			if(!imageFile.exists())
+			File dir = getActivity().getExternalFilesDir(null);
+			if(dir == null)
 				return "";
 
-			return imageFile.getPath();
+			return dir.listFiles()[position].getPath();
 		}
 
 		public boolean displayingImages()
 		{
-			return !TextUtils.isEmpty(getFile(0));
+			return getItemCount() > 0;
 		}
 
 		public class ImageViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener
 		{
 			private ImageView mImageView;
+			private ImageView mDeleteView;
 			private int position;
 
 			public ImageViewHolder(View itemView)
 			{
 				super(itemView);
 				mImageView = (ImageView) itemView.findViewById(R.id.image);
-				itemView.setOnClickListener(this);
+				mDeleteView = (ImageView) itemView.findViewById(R.id.delete);
+				mImageView.setOnClickListener(this);
 			}
 
 			/**
@@ -575,7 +581,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 			 *
 			 * @param image The path to the image
 			 */
-			public void bind(String image, int position)
+			public void bind(String image, final int position)
 			{
 				this.position = position;
 				if(TextUtils.isEmpty(image))
@@ -588,6 +594,23 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 				Picasso.with(mImageView.getContext()).load(new File(image))
 						.memoryPolicy(MemoryPolicy.NO_CACHE)
 						.resize(eighty, eighty).centerInside().into(mImageView);
+
+				mDeleteView.setOnClickListener(new View.OnClickListener()
+				{
+					@Override
+					public void onClick(View view)
+					{
+						getActivity().getExternalFilesDir(null).listFiles()[position].delete();
+						notifyItemRemoved(position);
+
+						int count = getItemCount();
+						if(count > 1)
+							notifyItemRangeChanged(position, count - position);
+						else
+							notifyItemChanged(0);
+					}
+				});
+				mDeleteView.setVisibility(getItemCount() < 2 ? View.GONE : View.VISIBLE);
 			}
 
 			@Override
@@ -1112,8 +1135,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 		try
 		{
 			// Reset the auto-focus trigger
-			mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
-					CameraMetadata.CONTROL_AF_TRIGGER_CANCEL);
+			mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CameraMetadata.CONTROL_AF_TRIGGER_CANCEL);
 			setAutoFlash(mPreviewRequestBuilder);
 			mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback, mBackgroundHandler);
 			// After this, the camera will go back to the normal state of preview.
