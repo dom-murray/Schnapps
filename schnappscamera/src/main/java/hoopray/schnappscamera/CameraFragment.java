@@ -283,8 +283,11 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 				@Override
 				public void run()
 				{
-					if(position <= mPhotoAdapter.getItemCount())
+					int count = mPhotoAdapter.getItemCount();
+					if(position <= count)
 						mPhotoAdapter.notifyItemChanged(position);
+
+					mPhotoGrid.scrollToPosition(position);
 					animateCameraButton();
 				}
 			});
@@ -406,7 +409,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	{
 		final Activity activity = getActivity();
 		if(activity != null)
-		{
 			activity.runOnUiThread(new Runnable()
 			{
 				@Override
@@ -415,7 +417,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 					Toast.makeText(activity, text, Toast.LENGTH_SHORT).show();
 				}
 			});
-		}
 	}
 
 	/**
@@ -534,7 +535,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 		@Override
 		public void onBindViewHolder(GridImageAdapter.ImageViewHolder holder, int position)
 		{
-			holder.bind(getFile(position));
+			holder.bind(getFile(position), position);
 		}
 
 		@Override
@@ -560,6 +561,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 		public class ImageViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener
 		{
 			private ImageView mImageView;
+			private int position;
 
 			public ImageViewHolder(View itemView)
 			{
@@ -573,8 +575,9 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 			 *
 			 * @param image The path to the image
 			 */
-			public void bind(String image)
+			public void bind(String image, int position)
 			{
+				this.position = position;
 				if(TextUtils.isEmpty(image))
 				{
 					mImageView.setImageResource(0);
@@ -596,11 +599,13 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 				optionsCompat = ActivityOptionsCompat.makeThumbnailScaleUpAnimation(view,
 						bitmap, (int) view.getX(), (int) view.getY());
 
+				Intent intent = new Intent(getView().getContext(), ImagesActivity.class);
+				intent.putExtra(ImagesActivity.INDEX, position);
 //				optionsCompat = ActivityOptionsCompat.makeClipRevealAnimation(view,
 //						(int) view.getX(), (int) view.getY(), view.getWidth(), view.getHeight());
 
 //				ActivityOptionsCompat optionsCompat = ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity(), mImageView, mImageView.getTransitionName());
-				ActivityCompat.startActivity(getActivity(), new Intent(mImageView.getContext(), ImagesActivity.class), optionsCompat.toBundle());
+				ActivityCompat.startActivity(getActivity(), intent, optionsCompat.toBundle());
 			}
 		}
 	}
@@ -1282,26 +1287,25 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 					.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener()
 					{
 						@Override
-						public void onClick(DialogInterface dialog, int which)
+						public void onClick(DialogInterface dialogInterface, int i)
 						{
 							FragmentCompat.requestPermissions(parent,
 									new String[]{Manifest.permission.CAMERA},
 									REQUEST_CAMERA_PERMISSION);
 						}
 					})
-					.setNegativeButton(android.R.string.cancel,
-							new DialogInterface.OnClickListener()
+					.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener()
+					{
+						@Override
+						public void onClick(DialogInterface dialogInterface, int i)
+						{
+							Activity activity = parent.getActivity();
+							if(activity != null)
 							{
-								@Override
-								public void onClick(DialogInterface dialog, int which)
-								{
-									Activity activity = parent.getActivity();
-									if(activity != null)
-									{
-										activity.finish();
-									}
-								}
-							})
+								activity.finish();
+							}
+						}
+					})
 					.create();
 		}
 	}

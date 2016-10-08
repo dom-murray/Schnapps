@@ -17,6 +17,8 @@ import java.io.File;
  */
 public class ImagesActivity extends AppCompatActivity
 {
+	public static final String INDEX = "index";
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
@@ -31,6 +33,7 @@ public class ImagesActivity extends AppCompatActivity
 		ExtensiblePageIndicator indicator = (ExtensiblePageIndicator) findViewById(R.id.pager_indicator);
 		indicator.initViewPager(imagesPager);
 
+		imagesPager.setCurrentItem(getIntent().getIntExtra(INDEX, 0));
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 	}
 
