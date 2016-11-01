@@ -287,7 +287,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 					if(position <= count)
 						mPhotoAdapter.notifyItemChanged(position);
 
-					if(position == 1)
+					if(count < 3) //Update the first image when there are 1 || 2 images stored
 						mPhotoAdapter.notifyItemChanged(0);
 
 					mPhotoGrid.scrollToPosition(position);
