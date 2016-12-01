@@ -1,6 +1,8 @@
 package hoopray.schnappscamera;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -24,7 +26,13 @@ public class ImagesActivity extends AppCompatActivity
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_images);
-		setTitle(getString(R.string.images));
+		getWindow().setStatusBarColor(Color.BLACK);
+		if(getSupportActionBar() != null)
+		{
+			getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.BLACK));
+			getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+			getSupportActionBar().setTitle(R.string.images);
+		}
 
 		ViewPager imagesPager = (ViewPager) findViewById(R.id.images_pager);
 		imagesPager.setAdapter(new ImagesPager(getSupportFragmentManager(), this));
@@ -34,7 +42,6 @@ public class ImagesActivity extends AppCompatActivity
 		indicator.initViewPager(imagesPager);
 
 		imagesPager.setCurrentItem(getIntent().getIntExtra(INDEX, 0));
-		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 	}
 
 	@Override
