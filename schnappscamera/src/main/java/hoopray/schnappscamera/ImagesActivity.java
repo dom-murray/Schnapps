@@ -20,7 +20,7 @@ import java.util.ArrayList;
 /**
  * @author Marcus Hooper
  */
-public class ImagesActivity extends AppCompatActivity
+class ImagesActivity extends AppCompatActivity
 {
 	public static final String INDEX = "index";
 	public static final String PATH_LIST = "pathList";

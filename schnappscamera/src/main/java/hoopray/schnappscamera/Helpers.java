@@ -7,7 +7,7 @@ import android.graphics.BitmapFactory;
  * @author Dominic Murray 3/12/2016.
  */
 
-public class Helpers
+class Helpers
 {
 	public static void calculateInSampleSize(String imagePath, BitmapFactory.Options options, int dimension)
 	{

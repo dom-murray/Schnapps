@@ -17,7 +17,7 @@ import java.lang.ref.WeakReference;
 /**
  * @author Marcus Hooper
  */
-public class ImageFragment extends Fragment
+class ImageFragment extends Fragment
 {
 	private static final String FILE_PATH = "file_path";
 	private String path;

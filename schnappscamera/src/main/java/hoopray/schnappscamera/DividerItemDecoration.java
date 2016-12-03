@@ -9,7 +9,7 @@ import android.view.View;
  * @author Dominic Murray 3/12/2016.
  */
 
-public class DividerItemDecoration extends RecyclerView.ItemDecoration
+class DividerItemDecoration extends RecyclerView.ItemDecoration
 {
 	private int orientation;
 	private int dividerSize;

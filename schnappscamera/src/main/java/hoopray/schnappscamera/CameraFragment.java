@@ -64,7 +64,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Marcus Hooper
  */
-public class CameraFragment extends Fragment implements View.OnClickListener, FragmentCompat.OnRequestPermissionsResultCallback
+class CameraFragment extends Fragment implements View.OnClickListener, FragmentCompat.OnRequestPermissionsResultCallback
 {
 	/**
 	 * Conversion from screen rotation to JPEG orientation.
@@ -190,8 +190,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	 */
 	private ImageView shutterView;
 
-	private ArrayList<String> pathList = new ArrayList<>();
-
 	/**
 	 * {@link CameraDevice.StateCallback} is called when {@link CameraDevice} changes its state.
 	 */
@@ -265,7 +263,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 		public void imageSaved(final String path)
 		{
 			Log.d("dom", "image saved");
-			pathList.add(path);
+			((CameraActivity) getActivity()).getPathList().add(path);
 			final Bitmap myBitmap = Helpers.loadBitmapToSize(path, (int) getResources().getDisplayMetrics().density * 48);
 			savedImagesButton.post(new Runnable()
 			{
@@ -491,7 +489,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 			public void onClick(View view)
 			{
 				Intent intent = new Intent(getView().getContext(), ImagesActivity.class);
-				intent.putExtra(ImagesActivity.PATH_LIST, pathList);
+				intent.putExtra(ImagesActivity.PATH_LIST, ((CameraActivity) getActivity()).getPathList());
 //				optionsCompat = ActivityOptionsCompat.makeClipRevealAnimation(view,
 //						(int) view.getX(), (int) view.getY(), view.getWidth(), view.getHeight());
 
