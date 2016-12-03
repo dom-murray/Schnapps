@@ -190,6 +190,11 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	 */
 	private ImageView savedImagesButton;
 
+	/**
+	 * {@link ImageView} to simulate shutter when photo is taken
+	 */
+	private ImageView shutterView;
+
 	private ArrayList<String> pathList = new ArrayList<>();
 
 	/**
@@ -474,6 +479,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 		cameraButton.setOnClickListener(this);
 		textureView = (TextureView) view.findViewById(R.id.texture);
 		savedImagesButton = (ImageView) view.findViewById(R.id.saved_images);
+		shutterView = (ImageView) view.findViewById(R.id.shutter_view);
 
 		savedImagesButton.setOnClickListener(new View.OnClickListener()
 		{
@@ -955,7 +961,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 				public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request,
 											   @NonNull TotalCaptureResult result)
 				{
-					showToast("Saved: new photo");// + mFile);
 					Log.d(TAG, "Saved new photo");//mFile.toString());
 					unlockFocus();
 					capturing = false;
@@ -1012,6 +1017,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	public void onClick(View view)
 	{
 		takePicture();
+		shutterView.setAlpha(1f);
+		shutterView.animate().alpha(0f).start();
 	}
 
 	private void animateCameraButton()

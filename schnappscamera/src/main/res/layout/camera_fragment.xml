@@ -5,25 +5,37 @@
               android:layout_height="match_parent"
               android:orientation="vertical">
 
-    <TextureView
-        android:id="@+id/texture"
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"/>
+        android:layout_weight="1">
+
+        <TextureView
+            android:id="@+id/texture"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+        
+        <ImageView
+            android:id="@+id/shutter_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/black"
+            android:alpha="0"/>
+    </RelativeLayout>
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="24dp"
         android:background="@android:color/black"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:padding="24dp">
 
         <de.hdodenhof.circleimageview.CircleImageView
             android:id="@+id/saved_images"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:scaleType="centerCrop"
-            android:layout_centerVertical="true"/>
+            android:layout_centerVertical="true"
+            android:scaleType="centerCrop"/>
 
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/picture"
