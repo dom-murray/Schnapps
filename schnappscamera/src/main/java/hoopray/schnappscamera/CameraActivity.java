@@ -3,6 +3,7 @@ package hoopray.schnappscamera;
 import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.view.KeyEvent;
 
 import java.io.File;
 
@@ -12,6 +13,8 @@ import java.io.File;
 public class CameraActivity extends Activity
 {
 	public static final String PATH_LIST = "pathList";
+
+	private HardwareVolumeListener hardwareVolumeListener = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
@@ -26,6 +29,17 @@ public class CameraActivity extends Activity
 		getFragmentManager().beginTransaction().add(R.id.container, new CameraFragment()).commit();
 	}
 
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event)
+	{
+		if(keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == KeyEvent.KEYCODE_VOLUME_UP)
+		{
+			if(hardwareVolumeListener != null)
+				hardwareVolumeListener.onVolumeClicked();
+		}
+		return true;
+	}
+
 	private void cleanUp()
 	{
 		File imagesDir = getExternalFilesDir(null);
@@ -34,5 +48,15 @@ public class CameraActivity extends Activity
 		if(null != files)
 			for(File file : files)
 				file.delete();
+	}
+
+	public void setHardwareVolumeListener(HardwareVolumeListener hardwareVolumeListener)
+	{
+		this.hardwareVolumeListener = hardwareVolumeListener;
+	}
+
+	public interface HardwareVolumeListener
+	{
+		void onVolumeClicked();
 	}
 }

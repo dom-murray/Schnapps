@@ -1,8 +1,6 @@
 package hoopray.schnappscamera;
 
 import android.Manifest;
-import android.animation.Animator;
-import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -15,7 +13,6 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
-import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
@@ -40,13 +37,11 @@ import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
-import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -481,6 +476,15 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 		savedImagesButton = (ImageView) view.findViewById(R.id.saved_images);
 		shutterView = (ImageView) view.findViewById(R.id.shutter_view);
 
+		((CameraActivity) getActivity()).setHardwareVolumeListener(new CameraActivity.HardwareVolumeListener()
+		{
+			@Override
+			public void onVolumeClicked()
+			{
+				takePicture();
+			}
+		});
+
 		savedImagesButton.setOnClickListener(new View.OnClickListener()
 		{
 			@Override
@@ -496,14 +500,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 				startActivity(intent);
 			}
 		});
-	}
-
-	private int getScreenWidth()
-	{
-		Display display = getActivity().getWindowManager().getDefaultDisplay();
-		Point size = new Point();
-		display.getSize(size);
-		return size.x;
 	}
 
 	@Override
@@ -887,6 +883,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	private void takePicture()
 	{
 		lockFocus();
+		shutterView.setAlpha(1f);
+		shutterView.animate().alpha(0f).start();
 	}
 
 	/**
@@ -1017,28 +1015,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	public void onClick(View view)
 	{
 		takePicture();
-		shutterView.setAlpha(1f);
-		shutterView.animate().alpha(0f).start();
-	}
-
-	private void animateCameraButton()
-	{
-		if(cameraButton.getTranslationY() != 0)
-			return;
-
-		Path animationPath = new Path();
-		int cy = (int) cameraButton.getY();
-		int cx = (int) cameraButton.getX();
-		animationPath.moveTo(cameraButton.getX(), cy);
-		int sw = getScreenWidth();
-		int fourFourDp = (int) getResources().getDisplayMetrics().density * 44;
-		int eightyDp = (int) getResources().getDisplayMetrics().density * 80;
-
-		animationPath.cubicTo(cx, cy, sw - eightyDp / 2, cy, sw - eightyDp, cy - fourFourDp);
-		Animator pathAnimator = ObjectAnimator.ofFloat(cameraButton, View.X, View.Y, animationPath);
-		pathAnimator.setDuration(500);
-		pathAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
-		pathAnimator.start();
 	}
 
 	private void setAutoFlash(CaptureRequest.Builder requestBuilder)
