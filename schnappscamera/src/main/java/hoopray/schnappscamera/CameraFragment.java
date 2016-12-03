@@ -12,7 +12,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
@@ -36,14 +35,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
-import android.support.v13.app.ActivityCompat;
 import android.support.v13.app.FragmentCompat;
-import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.text.TextUtils;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
@@ -56,17 +49,17 @@ import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.Toast;
-import com.squareup.picasso.MemoryPolicy;
-import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -193,17 +186,11 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	private Size mPreviewSize;
 
 	/**
-	 * A {@link android.support.v7.widget.RecyclerView} that displays a list of taken images
-	 * to be returned through the intent result
+	 * {@link ImageView} showing the last image taken
 	 */
-	private RecyclerView mPhotoGrid;
+	private ImageView savedImagesButton;
 
-	/**
-	 * {@link android.support.v7.widget.RecyclerView.Adapter} an adapter for displaying
-	 * the recently taken images
-	 */
-
-	private GridImageAdapter mPhotoAdapter;
+	private ArrayList<String> pathList = new ArrayList<>();
 
 	/**
 	 * {@link CameraDevice.StateCallback} is called when {@link CameraDevice} changes its state.
@@ -262,36 +249,30 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 	 */
 	private final ImageReader.OnImageAvailableListener mOnImageAvailableListener = new ImageReader.OnImageAvailableListener()
 	{
-		private int mCount = 0;
-
 		@Override
 		public void onImageAvailable(ImageReader reader)
 		{
-			String path = getActivity().getExternalFilesDir(null).getPath() + "/pic" + mCount + ".jpg";
-			mBackgroundHandler.post(new ImageSaver(reader.acquireNextImage(), path, mCount, imageSavedListener));
-			mCount++;
+			String dateTime = DateFormat.getDateTimeInstance().format(new Date());
+			dateTime = dateTime.replaceAll("[^a-zA-Z0-9.-]", "_");
+			String path = getActivity().getExternalFilesDir(null).getPath() + '/' + dateTime + ".jpg";
+			mBackgroundHandler.post(new ImageSaver(reader.acquireNextImage(), path, imageSavedListener));
 		}
 	};
 
 	private final ImageSaver.ImageSavedListener imageSavedListener = new ImageSaver.ImageSavedListener()
 	{
 		@Override
-		public void imageSaved(final int position)
+		public void imageSaved(final String path)
 		{
-			mPhotoGrid.post(new Runnable()
+			Log.d("dom", "image saved");
+			pathList.add(path);
+			final Bitmap myBitmap = Helpers.loadBitmapToSize(path, (int) getResources().getDisplayMetrics().density * 48);
+			savedImagesButton.post(new Runnable()
 			{
 				@Override
 				public void run()
 				{
-					int count = mPhotoAdapter.getItemCount();
-					if(position <= count)
-						mPhotoAdapter.notifyItemChanged(position);
-
-					if(count < 3) //Update the first image when there are 1 || 2 images stored
-						mPhotoAdapter.notifyItemChanged(0);
-
-					mPhotoGrid.scrollToPosition(position);
-					animateCameraButton();
+					savedImagesButton.setImageBitmap(myBitmap);
 				}
 			});
 		}
@@ -492,26 +473,23 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 		cameraButton = view.findViewById(R.id.picture);
 		cameraButton.setOnClickListener(this);
 		textureView = (TextureView) view.findViewById(R.id.texture);
-		mPhotoGrid = (RecyclerView) view.findViewById(R.id.stored_images);
+		savedImagesButton = (ImageView) view.findViewById(R.id.saved_images);
 
-		mPhotoGrid.setLayoutManager(getLayoutManager());
-		mPhotoGrid.getItemAnimator().setChangeDuration(0);
-		mPhotoAdapter = new GridImageAdapter();
-		mPhotoGrid.setAdapter(mPhotoAdapter);
-
-		if(mPhotoAdapter.displayingImages())
+		savedImagesButton.setOnClickListener(new View.OnClickListener()
 		{
-			int sw = getScreenWidth();
-			int fourFourDp = (int) getResources().getDisplayMetrics().density * 44;
-			int eightyDp = (int) getResources().getDisplayMetrics().density * 80;
-			cameraButton.setTranslationY(cameraButton.getY() - fourFourDp);
-			cameraButton.setTranslationX(cameraButton.getX() + (sw / 2) - eightyDp);
-		}
-	}
+			@Override
+			public void onClick(View view)
+			{
+				Intent intent = new Intent(getView().getContext(), ImagesActivity.class);
+				intent.putExtra(ImagesActivity.PATH_LIST, pathList);
+//				optionsCompat = ActivityOptionsCompat.makeClipRevealAnimation(view,
+//						(int) view.getX(), (int) view.getY(), view.getWidth(), view.getHeight());
 
-	private GridLayoutManager getLayoutManager()
-	{
-		return new GridLayoutManager(getActivity(), getSpanCount(), LinearLayoutManager.VERTICAL, false);
+//				ActivityOptionsCompat optionsCompat = ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity(), mImageView, mImageView.getTransitionName());
+//				ActivityCompat.startActivity(getActivity(), intent, optionsCompat.toBundle());
+				startActivity(intent);
+			}
+		});
 	}
 
 	private int getScreenWidth()
@@ -520,128 +498,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 		Point size = new Point();
 		display.getSize(size);
 		return size.x;
-	}
-
-	private int getSpanCount()
-	{
-		return (int) (getScreenWidth() / (getResources().getDisplayMetrics().density * 80));
-	}
-
-	protected class GridImageAdapter extends RecyclerView.Adapter<GridImageAdapter.ImageViewHolder>
-	{
-		@Override
-		public GridImageAdapter.ImageViewHolder onCreateViewHolder(ViewGroup parent, int viewType)
-		{
-			View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.grid_image, parent, false);
-			return new ImageViewHolder(view);
-		}
-
-		@Override
-		public void onBindViewHolder(GridImageAdapter.ImageViewHolder holder, int position)
-		{
-			holder.bind(getFile(position), position);
-		}
-
-		@Override
-		public int getItemCount()
-		{
-			File dir = getActivity().getExternalFilesDir(null);
-			return dir == null ? 0 : dir.listFiles().length;
-		}
-
-		public String getFile(int position)
-		{
-			File dir = getActivity().getExternalFilesDir(null);
-			if(dir == null)
-				return "";
-
-			return dir.listFiles()[position].getPath();
-		}
-
-		public boolean displayingImages()
-		{
-			return getItemCount() > 0;
-		}
-
-		public class ImageViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener
-		{
-			private ImageView mImageView;
-			private ImageView mDeleteView;
-			private int position;
-
-			public ImageViewHolder(View itemView)
-			{
-				super(itemView);
-				mImageView = (ImageView) itemView.findViewById(R.id.image);
-				mDeleteView = (ImageView) itemView.findViewById(R.id.delete);
-				mImageView.setOnClickListener(this);
-			}
-
-			/**
-			 * Binds the image to the view
-			 *
-			 * @param image The path to the image
-			 */
-			public void bind(String image, final int position)
-			{
-				this.position = position;
-				if(TextUtils.isEmpty(image))
-				{
-					mImageView.setImageResource(0);
-					return;
-				}
-
-				int eighty = (int) getResources().getDisplayMetrics().density * 80;
-				Picasso.with(mImageView.getContext()).load(new File(image))
-						.memoryPolicy(MemoryPolicy.NO_CACHE)
-						.resize(eighty, eighty).centerInside().into(mImageView);
-
-				mDeleteView.setOnClickListener(new View.OnClickListener()
-				{
-					@Override
-					public void onClick(View view)
-					{
-						view.getContext().getExternalFilesDir(null).listFiles()[position].delete();
-						notifyItemRemoved(position);
-
-						int count = getItemCount();
-						if(count > 1)
-							notifyItemRangeChanged(position, count - position);
-						else
-							notifyItemChanged(0);
-					}
-				});
-
-				int scale = getItemCount() < 2 ? 0 : 1;
-				if(mDeleteView.getScaleX() != scale)
-					mDeleteView.animate().scaleX(scale).scaleY(scale).start();
-			}
-
-			@Override
-			public void onClick(View view)
-			{
-				ActivityOptionsCompat optionsCompat;
-
-				Bitmap bitmap = Bitmap.createBitmap(view.getWidth(), view.getHeight(), Bitmap.Config.ARGB_8888);
-				optionsCompat = ActivityOptionsCompat.makeThumbnailScaleUpAnimation(view,
-						bitmap, (int) view.getX(), (int) view.getY());
-
-				Intent intent = new Intent(getView().getContext(), ImagesActivity.class);
-				intent.putExtra(ImagesActivity.INDEX, position);
-//				optionsCompat = ActivityOptionsCompat.makeClipRevealAnimation(view,
-//						(int) view.getX(), (int) view.getY(), view.getWidth(), view.getHeight());
-
-//				ActivityOptionsCompat optionsCompat = ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity(), mImageView, mImageView.getTransitionName());
-				ActivityCompat.startActivity(getActivity(), intent, optionsCompat.toBundle());
-			}
-		}
-	}
-
-	@Override
-	public void onConfigurationChanged(Configuration newConfig)
-	{
-		super.onConfigurationChanged(newConfig);
-		((GridLayoutManager) mPhotoGrid.getLayoutManager()).setSpanCount(getSpanCount());
 	}
 
 	@Override
@@ -1199,14 +1055,12 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 
 		private final String mFilePath;
 		private ImageSavedListener mListener;
-		private int mPosition;
 
-		public ImageSaver(Image image, String filePath, int position, ImageSavedListener listener)
+		public ImageSaver(Image image, String filePath, ImageSavedListener listener)
 		{
 			mImage = image;
 			mFilePath = filePath;
 			mListener = listener;
-			mPosition = position;
 		}
 
 		@Override
@@ -1221,7 +1075,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 			{
 				output = new FileOutputStream(file);
 				output.write(bytes);
-				mListener.imageSaved(mPosition);
+				mListener.imageSaved(mFilePath);
 			}
 			catch(IOException e)
 			{
@@ -1246,7 +1100,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fr
 
 		public interface ImageSavedListener
 		{
-			void imageSaved(int position);
+			void imageSaved(String path);
 		}
 	}
 

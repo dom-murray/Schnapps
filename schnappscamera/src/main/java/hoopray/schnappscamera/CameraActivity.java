@@ -1,6 +1,7 @@
 package hoopray.schnappscamera;
 
 import android.app.Activity;
+import android.graphics.Color;
 import android.os.Bundle;
 
 import java.io.File;
@@ -10,11 +11,14 @@ import java.io.File;
  */
 public class CameraActivity extends Activity
 {
+	public static final String PATH_LIST = "pathList";
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_camera);
+		getWindow().setStatusBarColor(Color.BLACK);
 
 		if(savedInstanceState == null)
 			cleanUp();
