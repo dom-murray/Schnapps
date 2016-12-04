@@ -498,6 +498,10 @@ class CameraFragment extends Fragment implements View.OnClickListener, FragmentC
 				startActivity(intent);
 			}
 		});
+
+		ArrayList<String> paths = ((CameraActivity) getActivity()).getPathList();
+		if(paths.size() > 0)
+			savedImagesButton.setImageBitmap(Helpers.loadBitmapToSize(paths.get(paths.size() - 1), (int) getResources().getDisplayMetrics().density * 48));
 	}
 
 	@Override

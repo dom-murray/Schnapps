@@ -28,8 +28,17 @@ class CameraActivity extends Activity
 
 		if(savedInstanceState == null)
 			cleanUp();
+		else
+			pathList = savedInstanceState.getStringArrayList(PATH_LIST);
 
 		getFragmentManager().beginTransaction().add(R.id.container, new CameraFragment()).commit();
+	}
+
+	@Override
+	protected void onSaveInstanceState(Bundle outState)
+	{
+		super.onSaveInstanceState(outState);
+		outState.putStringArrayList(PATH_LIST, pathList);
 	}
 
 	@Override

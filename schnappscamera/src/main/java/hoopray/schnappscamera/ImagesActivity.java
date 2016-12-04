@@ -41,7 +41,11 @@ class ImagesActivity extends AppCompatActivity
 			getSupportActionBar().setTitle(R.string.images);
 		}
 
-		pathList = getIntent().getStringArrayListExtra(PATH_LIST);
+		if(savedInstanceState == null)
+			pathList = getIntent().getStringArrayListExtra(PATH_LIST);
+		else
+			pathList = savedInstanceState.getStringArrayList(PATH_LIST);
+
 
 		imagesPager = (ViewPager) findViewById(R.id.images_pager);
 		imagesPager.setAdapter(new ImagesPager(getSupportFragmentManager()));
@@ -52,6 +56,13 @@ class ImagesActivity extends AppCompatActivity
 		recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
 		recyclerView.setAdapter(new PhotoAdapter());
 		recyclerView.addItemDecoration(new DividerItemDecoration((int) getResources().getDisplayMetrics().density * 8));
+	}
+
+	@Override
+	protected void onSaveInstanceState(Bundle outState)
+	{
+		super.onSaveInstanceState(outState);
+		outState.putStringArrayList(PATH_LIST, pathList);
 	}
 
 	@Override
