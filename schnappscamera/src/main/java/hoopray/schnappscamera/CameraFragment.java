@@ -262,7 +262,6 @@ class CameraFragment extends Fragment implements View.OnClickListener, FragmentC
 		@Override
 		public void imageSaved(final String path)
 		{
-			Log.d("dom", "image saved");
 			((CameraActivity) getActivity()).getPathList().add(path);
 			final Bitmap myBitmap = Helpers.loadBitmapToSize(path, (int) getResources().getDisplayMetrics().density * 48);
 			savedImagesButton.post(new Runnable()
