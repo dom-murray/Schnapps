@@ -7,6 +7,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -25,7 +26,6 @@ class ImagesActivity extends AppCompatActivity
 	public static final String INDEX = "index";
 	public static final String PATH_LIST = "pathList";
 	private ArrayList<String> pathList;
-	private RecyclerView recyclerView;
 	private ViewPager imagesPager;
 
 	@Override
@@ -34,11 +34,13 @@ class ImagesActivity extends AppCompatActivity
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_images);
 		getWindow().setStatusBarColor(Color.BLACK);
-		if(getSupportActionBar() != null)
+
+		ActionBar actionBar = getSupportActionBar();
+		if(actionBar != null)
 		{
-			getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.BLACK));
-			getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-			getSupportActionBar().setTitle(R.string.images);
+			actionBar.setBackgroundDrawable(new ColorDrawable(Color.BLACK));
+			actionBar.setDisplayHomeAsUpEnabled(true);
+			actionBar.setTitle(R.string.images);
 		}
 
 		if(savedInstanceState == null)
@@ -52,7 +54,7 @@ class ImagesActivity extends AppCompatActivity
 		imagesPager.setOffscreenPageLimit(2);
 		imagesPager.setCurrentItem(getIntent().getIntExtra(INDEX, 0));
 
-		recyclerView = (RecyclerView) findViewById(R.id.photo_roll);
+		RecyclerView recyclerView = (RecyclerView) findViewById(R.id.photo_roll);
 		recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
 		recyclerView.setAdapter(new PhotoAdapter());
 		recyclerView.addItemDecoration(new DividerItemDecoration((int) getResources().getDisplayMetrics().density * 8));
@@ -94,7 +96,6 @@ class ImagesActivity extends AppCompatActivity
 
 	private class PhotoAdapter extends RecyclerView.Adapter<PhotoViewHolder>
 	{
-
 		@Override
 		public PhotoViewHolder onCreateViewHolder(ViewGroup parent, int viewType)
 		{
